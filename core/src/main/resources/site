@@ -1,0 +1,67 @@
+{
+  "reverse": {
+    // 这是 A 的反向代理设置，必须有下面的 bridges 对象
+    "bridges": [
+      {
+        "tag": "bridge",
+        // 关于 A 的反向代理标签，在路由中会用到
+        "domain": "140.com"
+        // A和 B服务器 反向代理通信的域名，可以自己取一个，可以不是自己购买的域名，但必须跟下面 B服务器 中的 reverse 配置的域名一致
+      }
+    ]
+  },
+  "outbounds": [
+    {
+      //A连接 B服务器 的outbound
+      "tag": "tunnel",
+      // A 连接 B服务器 的 outbound 的标签，在路由中会用到
+      "protocol": "vmess",
+      "settings": {
+        "vnext": [
+          {
+            "address": "47.94.45.159",
+            // B 地址，IP 或 实际的域名
+            "port": 41500,
+            "users": [
+              {
+                "id": "0a0ee59e-fb75-450a-b549-bdf3b30956b8",
+                "alterId": 64
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // 另一个 outbound，最终连接私有网盘
+    {
+      "protocol": "freedom",
+      "settings": {
+        "redirect": "127.0.0.1:8082"
+      },
+      "tag": "out"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        // 配置 A 主动连接 B 的路由规则
+        "type": "field",
+        "inboundTag": [
+          "bridge"
+        ],
+        "domain": [
+          "full:140.com"
+        ],
+        "outboundTag": "tunnel"
+      },
+      {
+        // 反向连接访问私有网盘的规则
+        "type": "field",
+        "inboundTag": [
+          "bridge"
+        ],
+        "outboundTag": "out"
+      }
+    ]
+  }
+}

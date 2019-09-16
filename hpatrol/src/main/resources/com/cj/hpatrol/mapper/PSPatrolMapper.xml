@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hpatrol.mapper.PSPatrolMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.PatrolStation" >
+    <id column="patrol_station_id" property="patrolStationId" jdbcType="BIGINT" />
+    <result column="patrol_cycle_id" property="patrolCycleId" jdbcType="BIGINT" />
+    <result column="site_id" property="siteId" jdbcType="BIGINT" />
+    <result column="city_id" property="cityId" jdbcType="BIGINT" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    patrol_station_id, patrol_cycle_id, site_id, city_id, start_time, end_time
+  </sql>
+  <resultMap id="PatrolStationMod" type="com.cj.hpatrol.domain.PatrolStationModel">
+    <id column="patrol_station_id" property="patrolStationId" jdbcType="BIGINT" />
+    <result column="patrol_cycle_id" property="patrolCycleId" jdbcType="BIGINT" />
+    <result column="site_id" property="siteId" jdbcType="BIGINT" />
+    <result column="city_id" property="cityId" jdbcType="BIGINT" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="siteName" property="siteName" jdbcType="BIGINT" />
+    <result column="cityName" property="cityName" jdbcType="VARCHAR" />
+  </resultMap>
+  <!--根据巡查周期省表id查询-->
+  <select id="findByPatrolCycleId" resultMap="PatrolStationMod" parameterType="java.lang.Long">
+    SELECT ps.*,s.site_name siteName,re.name cityName
+    FROM patrol_station ps
+    LEFT JOIN site s ON ps.site_id = s.site_id
+    LEFT JOIN region_2017 re ON ps.city_id = re.id
+    WHERE ps.patrol_cycle_id = #{patrolCycleId}
+  </select>
+<!--根据主任务id删除-->
+  <delete id="deleteByPatrolCycleId" parameterType="java.lang.Long">
+    DELETE FROM patrol_station WHERE patrol_cycle_id = #{patrolCycleId}
+  </delete>
+</mapper>

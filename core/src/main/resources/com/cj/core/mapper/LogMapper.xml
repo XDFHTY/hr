@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.core.mapper.LogMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.domain.VoLog" >
+    <id column="operate_log_id" property="operateLogId" jdbcType="BIGINT" />
+    <result column="operate_id" property="operateId" jdbcType="BIGINT" />
+    <result column="client" property="client" jdbcType="VARCHAR" />
+    <result column="log_name" property="logName" jdbcType="VARCHAR" />
+    <result column="log_value" property="logValue" jdbcType="VARCHAR" />
+    <result column="log_state" property="logState" jdbcType="CHAR" />
+    <result column="operate_time" property="operateTime" jdbcType="TIMESTAMP" />
+
+    <result column="full_name" property="fullName"/>
+    <result column="role_name" property="roleName"/>
+  </resultMap>
+
+
+  <select id="findLog" resultMap="BaseResultMap">
+    SELECT
+    ol.*,
+    ai.full_name,
+    ar.role_name
+    FROM operate_log ol
+    LEFT JOIN admin_info ai ON ai.admin_id = ol.operate_id
+    LEFT JOIN auth_customer_role acr ON acr.customer_id = ai.admin_id
+    LEFT JOIN auth_role ar ON ar.role_id = acr.role_id
+
+  </select>
+</mapper>

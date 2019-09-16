@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hcensus.mapper.SCensusMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.Site" >
+    <id column="site_id" property="siteId" jdbcType="BIGINT" />
+    <result column="site_name" property="siteName" jdbcType="VARCHAR" />
+    <result column="site_num" property="siteNum" jdbcType="VARCHAR" />
+    <result column="site_longitude" property="siteLongitude" jdbcType="DECIMAL" />
+    <result column="site_latitude" property="siteLatitude" jdbcType="DECIMAL" />
+    <result column="site_address" property="siteAddress" jdbcType="VARCHAR" />
+    <result column="site_province_id" property="siteProvinceId" jdbcType="BIGINT" />
+    <result column="site_city_id" property="siteCityId" jdbcType="BIGINT" />
+    <result column="site_area" property="siteArea" jdbcType="BIGINT" />
+    <result column="site_company_id" property="siteCompanyId" jdbcType="BIGINT" />
+    <result column="site_system_type" property="siteSystemType" jdbcType="VARCHAR" />
+    <result column="product_model_id" property="productModelId" jdbcType="BIGINT" />
+    <result column="item_number_id" property="itemNumberId" jdbcType="BIGINT" />
+    <result column="project_manager" property="projectManager" jdbcType="VARCHAR" />
+    <result column="site_type_id" property="siteTypeId" jdbcType="BIGINT" />
+    <result column="site_manufacture_time" property="siteManufactureTime" jdbcType="TIMESTAMP" />
+    <result column="site_guarantee_time" property="siteGuaranteeTime" jdbcType="TIMESTAMP" />
+    <result column="site_acceptance_time" property="siteAcceptanceTime" jdbcType="TIMESTAMP" />
+    <result column="integrate_firm" property="integrateFirm" jdbcType="VARCHAR" />
+    <result column="site_nature_id" property="siteNatureId" jdbcType="BIGINT" />
+    <result column="site_usage_state_id" property="siteUsageStateId" jdbcType="BIGINT" />
+    <result column="antenna_height" property="antennaHeight" jdbcType="VARCHAR" />
+    <result column="site_serial_number" property="siteSerialNumber" jdbcType="VARCHAR" />
+    <result column="core_equipment" property="coreEquipment" jdbcType="VARCHAR" />
+    <result column="oper_sys_virsion" property="operSysVirsion" jdbcType="VARCHAR" />
+    <result column="mon_soft_version" property="monSoftVersion" jdbcType="VARCHAR" />
+    <result column="other_soft_info" property="otherSoftInfo" jdbcType="VARCHAR" />
+    <result column="is_shutdown" property="isShutdown" jdbcType="CHAR" />
+    <result column="site_describe" property="siteDescribe" jdbcType="VARCHAR" />
+    <result column="site_sale_state" property="siteSaleState" jdbcType="CHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="is_delete_state" property="isDeleteState" jdbcType="CHAR" />
+  </resultMap>
+
+  <resultMap id="StaCensusMod" type="com.cj.hcensus.domain.StaCensusModel">
+    <result column="nor" property="nor" jdbcType="INTEGER" />
+    <result column="abn" property="abn" jdbcType="INTEGER" />
+    <result column="inp" property="inp" jdbcType="INTEGER" />
+  </resultMap>
+<!--统计站点状态-->
+  <select id="findCensusS" resultMap="StaCensusMod" parameterType="map">
+    SELECT
+sum(
+	CASE site_sale_state
+	WHEN 1 THEN
+		1
+	ELSE
+		0
+	END
+) nor,
+ sum(
+	CASE site_sale_state
+	WHEN 2 THEN
+		1
+	ELSE
+		0
+	END
+) inp,
+ sum(
+	CASE site_sale_state
+	WHEN 3 THEN
+		1
+	ELSE
+		0
+	END
+) abn
+FROM
+	site
+<where>
+    is_delete_state = '1'
+  <if test="pid != null">
+    AND site_province_id = #{pid}
+  </if>
+  <if test="cid != null">
+    AND site_city_id = #{cid}
+</if>
+</where>
+  </select>
+  <resultMap id="WorCensusMod" type="com.cj.hcensus.domain.WorCensusModel">
+      <result column="site_type_name" property="siteType" jdbcType="VARCHAR" />
+      <result column="staNum" property="staNum" jdbcType="INTEGER" />
+      <result column="patNum" property="patNum" jdbcType="INTEGER" />
+  </resultMap>
+    <!--统计工作情况-->
+    <select id="findCensusW" resultMap="WorCensusMod" parameterType="map">
+        SELECT
+        st.site_type_name,
+        COUNT(DISTINCT rr.repair_record_id) staNum,
+        SUM(CASE pts.patrol_state
+        WHEN '1' THEN
+			1
+		ELSE
+			0
+		END
+        ) patNum
+        FROM
+        site s
+        LEFT JOIN patrol_task_station pts ON s.site_id = pts.site_id
+        LEFT JOIN site_type st ON s.site_type_id = st.site_type_id
+        LEFT JOIN `declare_data` d ON s.site_id = d.site_id
+        LEFT JOIN sale_num sn ON d.declare_id = sn.declare_id
+        LEFT JOIN repair_record rr ON sn.sale_num_id = rr.sale_num_id
+        <where>
+          s.is_delete_state = '1'
+          <if test="adminId != null">
+            AND pts.patrol_id = #{adminId}
+            AND rr.maintain_people_id = #{adminId}
+          </if>
+          <if test="start != null">
+            AND rr.maintain_time >= #{start}
+            AND pts.leave_time >= #{start}
+          </if>
+          <if test="end != null">
+            AND rr.maintain_time &lt;= #{end}
+            AND pts.leave_time &lt;= #{end}
+          </if>
+      </where>
+        GROUP BY
+        s.site_type_id
+    </select>
+</mapper>

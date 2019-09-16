@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hpatrol.mapper.PCPatrolMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.PatrolCycle" >
+    <id column="patrol_cycle_id" property="patrolCycleId" jdbcType="BIGINT" />
+    <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="create_name" property="createName" jdbcType="VARCHAR" />
+    <result column="patrol_id" property="patrolId" jdbcType="BIGINT" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="cycle" property="cycle" jdbcType="INTEGER" />
+    <result column="advance" property="advance" jdbcType="INTEGER" />
+    <result column="execute_num" property="executeNum" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    patrol_cycle_id, task_name, province_id, create_name, patrol_id, start_time, end_time,
+    cycle, advance, execute_num
+  </sql>
+  <resultMap id="PatrolCycleMod" type="com.cj.hpatrol.domain.PatrolCycleModel">
+    <id column="patrol_cycle_id" property="patrolCycleId" jdbcType="BIGINT" />
+    <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="create_name" property="createName" jdbcType="VARCHAR" />
+    <result column="patrol_id" property="patrolId" jdbcType="BIGINT" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="cycle" property="cycle" jdbcType="INTEGER" />
+    <result column="advance" property="advance" jdbcType="INTEGER" />
+    <result column="execute_num" property="executeNum" jdbcType="INTEGER" />
+    <result column="provinceName" property="provinceName" jdbcType="VARCHAR" />
+    <result column="patrolName" property="patrolName" jdbcType="VARCHAR" />
+    <collection property="listPSM"
+                column="patrol_cycle_id"
+                ofType="com.cj.hpatrol.domain.PatrolStationModel"
+                select="com.cj.hpatrol.mapper.PSPatrolMapper.findByPatrolCycleId"/>
+  </resultMap>
+  <!--查询总条数-->
+  <select id="findCount" resultType="java.lang.Integer" parameterType="com.cj.core.domain.Pager">
+SELECT
+	COUNT(DISTINCT pc.patrol_cycle_id)
+FROM
+	patrol_cycle pc
+LEFT JOIN region_2017 re ON pc.province_id = re.id
+LEFT JOIN admin_info ai ON pc.patrol_id = admin_id
+<where>
+  <if test="parameter != null">
+    (
+    instr(pc.task_name, #{parameter}) > 0
+    OR instr(pc.create_name, #{parameter}) > 0
+    OR instr(ai.full_name, #{parameter}) > 0
+    OR instr(re.`name`, #{parameter}) > 0
+    )
+  </if>
+</where>
+  </select>
+  <!--分页查询内容-->
+  <select id="findPage" resultMap="PatrolCycleMod" parameterType="com.cj.core.domain.Pager">
+    SELECT
+    pc.*,re.name provinceName ,ai.full_name patrolName
+    FROM
+    patrol_cycle pc
+    LEFT JOIN region_2017 re ON pc.province_id = re.id
+    LEFT JOIN admin_info ai ON pc.patrol_id = admin_id
+    <where>
+      <if test="parameter != null">
+        (
+        instr(pc.task_name, #{parameter}) > 0
+        OR instr(pc.create_name, #{parameter}) > 0
+        OR instr(ai.full_name, #{parameter}) > 0
+        OR instr(re.`name`, #{parameter}) > 0
+        )
+      </if>
+    </where>
+  </select>
+  <!--查询全部-->
+  <select id="findAll" resultMap="PatrolCycleMod">
+    SELECT * FROM patrol_cycle
+  </select>
+</mapper>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hmould.mapper.ModuldMapper">
+    <resultMap id="BaseResultMap" type="com.cj.core.entity.CheckItem">
+        <id column="check_item_id" property="checkItemId" jdbcType="BIGINT"/>
+        <result column="check_item_name" property="checkItemName" jdbcType="VARCHAR"/>
+        <result column="parent_id" property="parentId" jdbcType="BIGINT"/>
+        <result column="level" property="level" jdbcType="INTEGER"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    check_item_id, check_item_name, parent_id, level
+  </sql>
+
+    <resultMap id="CheckItem" type="com.cj.hmould.domain.VoCheckItem">
+        <result column="id1" property="checkItemId"/>
+        <result column="name1" property="checkItemName"/>
+        <result column="l1" property="level"/>
+        <collection property="child" ofType="com.cj.hmould.domain.VoCheckItem">
+            <result column="id2" property="checkItemId"/>
+            <result column="name2" property="checkItemName"/>
+            <result column="l2" property="level"/>
+            <collection property="child" ofType="com.cj.hmould.domain.VoCheckItem">
+                <result column="id3" property="checkItemId"/>
+                <result column="name3" property="checkItemName"/>
+                <result column="l3" property="level"/>
+                <collection property="child" ofType="com.cj.hmould.domain.VoCheckItem">
+                    <result column="id4" property="checkItemId"/>
+                    <result column="name4" property="checkItemName"/>
+                    <result column="l4" property="level"/>
+                </collection>
+            </collection>
+        </collection>
+
+    </resultMap>
+
+    <select id="findModule" resultMap="CheckItem">
+    SELECT
+    ci1.check_item_id id1,ci1.check_item_name name1,ci1.level l1,
+    ci2.check_item_id id2,ci2.check_item_name name2,ci2.level l2,
+    ci3.check_item_id id3,ci3.check_item_name name3,ci3.level l3,
+    ci4.check_item_id id4,ci4.check_item_name name4,ci4.level l4
+    FROM check_item ci1
+    LEFT JOIN check_item ci2 ON ci1.check_item_id = ci2.parent_id
+    LEFT JOIN check_item ci3 ON ci2.check_item_id = ci3.parent_id
+    LEFT JOIN check_item ci4 ON ci3.check_item_id = ci4.parent_id
+    WHERE
+    ci1.level = '1'
+    OR
+    ci2.level = '2'
+    OR
+    ci3.level = '3'
+    OR
+    ci4.level = '4'
+  </select>
+
+    <resultMap id="SiteCheckItem" type="com.cj.core.entity.SiteCheckItem">
+        <result column="site_check_item_id" property="siteCheckItemId"/>
+        <result column="site_id" property="siteId"/>
+        <result column="check_item_id" property="checkItemId"/>
+        <result column="state" property="state"/>
+    </resultMap>
+
+    <select id="findsiteCheckItemId" parameterType="java.lang.Long" resultMap="SiteCheckItem">
+        SELECT
+        site_check_item_id,site_id,check_item_id,state
+        FROM site_check_item sci
+        WHERE
+        sci.state = '1'
+        AND
+        sci.site_id = #{siteId}
+    </select>
+
+
+    <insert id="UpdateSiteModuld" parameterType="com.cj.hmould.domain.UpdateSiteModuldVo">
+        DELETE FROM site_check_item WHERE site_id = #{siteId};
+        <if test="siteCheckItems.size() != 0">
+            INSERT INTO site_check_item (site_id, check_item_id)
+            VALUES
+            <foreach collection="siteCheckItems" item="item" separator=",">
+                (
+                <!--<if test="item.siteCheckItemId==null">-->
+                <!--0,-->
+                <!--</if>-->
+                <!--<if test="item.siteCheckItemId!=null">-->
+                <!--#{item.siteCheckItemId},-->
+                <!--</if>-->
+                #{siteId},
+                #{item.checkItemId}
+
+                )
+            </foreach>
+        </if>
+
+    </insert>
+
+
+    <insert id="addSiteCheckItemMsg" parameterType="java.util.List">
+        REPLACE INTO
+        site_check_item_msg(scim_id,patrol_task_station_id,check_item_name1,check_item_name2,
+        check_item_name3,check_item_name4,check_item_msg,check_item_result)
+        VALUES
+        <foreach collection="siteCheckItemMsgs" item="item" separator=",">
+            (
+            <if test="item.scimId==null">
+                0,
+            </if>
+            <if test="item.scimId!=null">
+                #{item.scimId},
+            </if>
+            #{item.patrolTaskStationId},
+            #{item.checkItemName1},
+            #{item.checkItemName2},
+            #{item.checkItemName3},
+            #{item.checkItemName4},
+            #{item.checkItemMsg},
+            #{item.checkItemResult}
+            )
+        </foreach>
+    </insert>
+
+    <resultMap id="SiteCheckItemMsg" type="com.cj.core.entity.SiteCheckItemMsg">
+        <result column="scim_id" property="scimId"/>
+        <result column="patrol_task_station_id" property="patrolTaskStationId"/>
+        <result column="check_item_name1" property="checkItemName1"/>
+        <result column="check_item_name2" property="checkItemName2"/>
+        <result column="check_item_name3" property="checkItemName3"/>
+        <result column="check_item_name4" property="checkItemName4"/>
+        <result column="check_item_msg" property="checkItemMsg"/>
+        <result column="check_item_result" property="checkItemResult"/>
+    </resultMap>
+
+    <select id="findSiteCheckItemMsgByPatrolTaskStationId" parameterType="long" resultMap="SiteCheckItemMsg">
+        SELECT *
+        FROM site_check_item_msg scim
+        WHERE
+        scim.patrol_task_station_id = #{patrolTaskStationId}
+    </select>
+
+    <resultMap id="VoNames" type="com.cj.hmould.domain.VoNames">
+        <result column="patrol_task_station_id" property="patrolTaskStationId"/>
+
+        <collection property="names" ofType="com.cj.hmould.domain.VoNames">
+            <result column="check_item_name1" property="name"/>
+            <collection property="names" ofType="com.cj.hmould.domain.VoNames">
+                <result column="scim_id" property="scimId"/>
+                <result column="check_item_name2" property="name"/>
+                <result column="check_item_msg" property="checkItemMsg"/>
+                <result column="check_item_result" property="checkItemResult"/>
+                <collection property="names" ofType="com.cj.hmould.domain.VoNames">
+                    <result column="scim_id" property="scimId"/>
+                    <result column="check_item_name3" property="name"/>
+                    <result column="check_item_msg" property="checkItemMsg"/>
+                    <result column="check_item_result" property="checkItemResult"/>
+                    <collection property="names" ofType="com.cj.hmould.domain.VoNames">
+                        <result column="scim_id" property="scimId"/>
+                        <result column="check_item_name4" property="name"/>
+                        <result column="check_item_msg" property="checkItemMsg"/>
+                        <result column="check_item_result" property="checkItemResult"/>
+                    </collection>
+                </collection>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="findVoNamesByPatrolTaskStationId"  parameterType="long" resultMap="VoNames">
+        SELECT
+        *
+        FROM
+        site_check_item_msg sci
+        WHERE sci.`patrol_task_station_id` = #{patrolTaskStationId}
+        ORDER BY sci.`check_item_name1`,
+        sci.`check_item_name2`,
+        sci.`check_item_name3`,
+        sci.`check_item_name4`
+    </select>
+</mapper>

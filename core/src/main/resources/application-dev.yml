@@ -1,0 +1,23 @@
+
+web:
+  path: D:/file/hr/
+dbip: 59.110.164.54
+dbname: hrxj
+spring:
+  datasource:
+    platform: mysql
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${dbip}:63306/${dbname}?characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: rootpass
+    type: com.alibaba.druid.pool.DruidDataSource
+  resources:
+    static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,file:${web.path}
+datapram:
+  tooldir: mysqldump
+  ip: ${dbip}
+  dbname: ${dbname}
+  username: ENC(9aNi3IHj2H6kZr0ODNHtyA==)
+  password: ENC(TkOCIol7cpFd41MfpYYQBK+giiV3zOn3)
+  dir: D:/file/hr/sql/
+

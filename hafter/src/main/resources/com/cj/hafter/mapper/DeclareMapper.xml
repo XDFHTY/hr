@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hafter.mapper.DeclareMapper" >
+
+    <resultMap type="com.cj.core.entity.DeclareData" id="BaseResultMap">
+      <id property="declareId" jdbcType="BIGINT" column="declare_id"/>
+      <result property="contactsName" jdbcType="VARCHAR" column="contacts_name"/>
+      <result property="phone" jdbcType="VARCHAR" column="phone"/>
+      <result property="siteId" jdbcType="BIGINT" column="site_id"/>
+      <result property="declareType" jdbcType="CHAR" column="declare_type"/>
+      <result property="declareContent" jdbcType="VARCHAR" column="declare_content"/>
+      <result property="founderId" jdbcType="BIGINT" column="founder_id"/>
+      <result property="executorId" jdbcType="BIGINT" column="executor_id"/>
+      <result property="executionTime" jdbcType="TIMESTAMP" column="execution_time"/>
+      <result property="handleState" jdbcType="CHAR" column="handle_state"/>
+      <result property="createTime" jdbcType="TIMESTAMP" column="create_time"/>
+    </resultMap>
+
+
+    <resultMap id="findAllMap" type="com.cj.hafter.entity.DeclareVo">
+        <id property="declareId" jdbcType="BIGINT" column="declare_id"/>
+        <result property="contactsName" jdbcType="VARCHAR" column="contacts_name"/>
+        <result property="phone" jdbcType="VARCHAR" column="phone"/>
+        <result property="siteId" jdbcType="BIGINT" column="site_id"/>
+        <result property="declareType" jdbcType="CHAR" column="declare_type"/>
+        <result property="declareContent" jdbcType="VARCHAR" column="declare_content"/>
+        <result property="founderId" jdbcType="BIGINT" column="founder_id"/>
+        <result property="executorId" jdbcType="BIGINT" column="executor_id"/>
+        <result property="executionTime" jdbcType="TIMESTAMP" column="execution_time"/>
+        <result property="handleState" jdbcType="CHAR" column="handle_state"/>
+        <result property="createTime" jdbcType="TIMESTAMP" column="create_time"/>
+        <result column="role_name" property="roleName"/>
+        <result column="fname" property="founderName"/>
+        <result column="site_guarantee_time" property="siteGuaranteeTime"/>
+        <result column="site_name" property="siteName"/>
+        <result column="pname" property="provinceName"/>
+        <result column="cname" property="cityName"/>
+        <result column="exeName" property="executorName"/>
+        <collection property="imgList"
+                    ofType="com.cj.core.entity.Resources" select="findDeclareImgById" column="declare_id">
+        </collection>
+    </resultMap>
+    <resultMap type="com.cj.core.entity.Resources" id="findDeclareImgByIdMap">
+        <id jdbcType="BIGINT" property="resourceId" column="resource_id"/>
+        <result jdbcType="VARCHAR" property="resourceUrl" column="resource_url"/>
+        <result jdbcType="CHAR" property="resourceType" column="resource_type"/>
+        <result jdbcType="BIGINT" property="relationId" column="relation_id"/>
+        <result jdbcType="VARCHAR" property="fileName" column="file_name"/>
+        <result jdbcType="TIMESTAMP" property="createTime" column="create_time"/>
+        <result jdbcType="BIGINT" property="founderId" column="founder_id"/>
+    </resultMap>
+
+
+    <select id="findDeclareImgById" resultMap="findDeclareImgByIdMap">
+        SELECT *
+        FROM resources
+        WHERE relation_id = #{declareId}
+        AND (resource_type = '申报图片' or resource_type = '申报视频')
+    </select>
+
+
+
+    <!--分页查询售后申报-->
+    <select id="findAll" parameterType="com.cj.core.domain.Pager" resultMap="findAllMap">
+        SELECT d.*,ar.`role_name`,ai.`full_name` AS `fname`,s.site_guarantee_time,s.`site_name`,r2.`name` as pname,r3.`name` as cname,ai2.`full_name` AS exeName
+        FROM `declare_data` d
+            LEFT JOIN auth_customer_role acr ON d.`founder_id` = acr.`customer_id`
+            LEFT JOIN auth_role ar ON acr.`role_id` = ar.`role_id`
+            LEFT JOIN admin_info ai ON d.`founder_id` = ai.`admin_id`
+            LEFT JOIN `site` s ON d.`site_id` = s.`site_id`
+            LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+            LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+            LEFT JOIN admin_info ai2 ON d.`executor_id` = ai2.`admin_id`
+        where d.handle_state = '待处理'
+        <if test="parameter != null">
+            and  (
+            instr(d.declare_id, #{parameter}) > 0
+            OR instr(ar.`role_name`, #{parameter}) > 0
+            OR instr(ai.`full_name`, #{parameter}) > 0
+            OR instr(d.contacts_name, #{parameter}) > 0
+            OR instr(d.phone, #{parameter}) > 0
+            OR instr(r2.`name`, #{parameter}) > 0
+            OR instr(r3.`name`, #{parameter}) > 0
+            OR instr(d.`create_time`, #{parameter}) > 0
+            OR instr(d.declare_type, #{parameter}) > 0
+            OR instr(s.`site_name`, #{parameter}) > 0
+            OR instr(ai2.`full_name` , #{parameter}) > 0
+            )
+        </if>
+
+    </select>
+
+
+
+    <!--查询归属地下  指派给他和未指派的任务-->
+    <select id="findFRecords" resultMap="findAllMap">
+        SELECT d.*,ar.`role_name`,ai.`full_name` AS `fname`,s.site_guarantee_time,s.`site_name`,r2.`name` AS pname,r3.`name` AS cname,ai2.`full_name` AS exeName
+        FROM `declare_data` d
+            LEFT JOIN auth_customer_role acr ON d.`founder_id` = acr.`customer_id`
+            LEFT JOIN auth_role ar ON acr.`role_id` = ar.`role_id`
+            LEFT JOIN admin_info ai ON d.`founder_id` = ai.`admin_id`
+            LEFT JOIN `site` s ON d.`site_id` = s.`site_id`
+            LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+            LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+            LEFT JOIN admin_info ai2 ON d.`executor_id` = ai2.`admin_id`
+
+        WHERE
+        (
+        (d.executor_id IS NULL
+        <if test="parameters.pid != null">
+            AND r2.`id` = #{parameters.pid}
+        </if>
+        <if test="parameters.cid != null">
+            and r3.`id` = #{parameters.cid}
+        </if>
+        )
+        OR
+        d.executor_id = #{parameters.id}  )
+        <if test="parameter != null">
+            <if test="parameter == 1">
+                AND (d.`handle_state` = '待处理' OR d.`handle_state` = '处理中')
+            </if>
+            <if test="parameter == 2">
+                AND d.`handle_state` = '已完成'
+            </if>
+        </if>
+
+    </select>
+
+
+    <!--查询指派给他的任务-->
+    <select id="findDeclareByExeId" resultMap="findAllMap">
+        SELECT d.*,ar.`role_name`,ai.`full_name` AS `fname`,s.site_guarantee_time,s.`site_name`,r2.`name` AS pname,r3.`name` AS cname,ai2.`full_name` AS exeName
+        FROM `declare_data` d
+        LEFT JOIN auth_customer_role acr ON d.`founder_id` = acr.`customer_id`
+        LEFT JOIN auth_role ar ON acr.`role_id` = ar.`role_id`
+        LEFT JOIN admin_info ai ON d.`founder_id` = ai.`admin_id`
+        LEFT JOIN `site` s ON d.`site_id` = s.`site_id`
+        LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+        LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+        LEFT JOIN admin_info ai2 ON d.`executor_id` = ai2.`admin_id`
+
+        WHERE
+        d.executor_id = #{parameters.id}
+        <if test="parameter != null">
+            <if test="parameter == 1">
+                AND (d.`handle_state` = '待处理' OR d.`handle_state` = '处理中')
+            </if>
+            <if test="parameter == 2">
+                AND d.`handle_state` = '已完成'
+            </if>
+        </if>
+    </select>
+
+
+    <resultMap id="findRepairRecordMap" type="com.cj.hafter.entity.RepairRecordVo">
+        <id jdbcType="BIGINT" property="repairRecordId" column="repair_record_id"/>
+        <result jdbcType="BIGINT" property="oneLevelId" column="one_level_id"/>
+        <result jdbcType="BIGINT" property="twoLevelId" column="two_level_id"/>
+        <result jdbcType="BIGINT" property="threeLevelId" column="three_level_id"/>
+        <result column="sale_num_id" property="saleNumId"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="describe_content" property="describeContent"/>
+        <result column="maintain_time" property="maintainTime"/>
+        <result column="maintain_people_id" property="maintainPeopleId"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="s1name" property="oneLevelName"/>
+        <result column="s2name" property="twoLevelName"/>
+        <result column="s3name" property="threeLevelName"/>
+        <result column="full_name" property="maintainPeopleName"/>
+        <collection property="imgList"
+                    ofType="com.cj.core.entity.Resources" select="findRepairImgById" column="repair_record_id">
+        </collection>
+    </resultMap>
+    <resultMap type="com.cj.core.entity.Resources" id="findRepairImgByIdMap">
+        <id jdbcType="BIGINT" property="resourceId" column="resource_id"/>
+        <result jdbcType="VARCHAR" property="resourceUrl" column="resource_url"/>
+        <result jdbcType="CHAR" property="resourceType" column="resource_type"/>
+        <result jdbcType="BIGINT" property="relationId" column="relation_id"/>
+        <result jdbcType="VARCHAR" property="fileName" column="file_name"/>
+        <result jdbcType="TIMESTAMP" property="createTime" column="create_time"/>
+        <result jdbcType="BIGINT" property="founderId" column="founder_id"/>
+    </resultMap>
+    <select id="findRepairImgById" resultMap="findRepairImgByIdMap">
+        SELECT *
+        FROM resources
+        WHERE relation_id = #{repairId}
+        AND (resource_type = '申报处理结果图片'  or resource_type = '申报处理结果视频')
+    </select>
+
+
+
+
+    <!--查询维修记录-->
+    <select id="findRepairRecord" resultMap="findRepairRecordMap">
+        SELECT rr.*,d.`device_name`,st1.`sale_type_name`  s1name,st2.`sale_type_name` s2name,st3.`sale_type_name` s3name,ai.full_name
+        FROM declare_data dd
+            LEFT JOIN sale_num sn ON dd.`declare_id` = sn.`declare_id`
+            LEFT JOIN repair_record rr ON sn.`sale_num_id` = rr.`sale_num_id`
+            LEFT JOIN device d ON rr.`device_id` = d.`device_id`
+            LEFT JOIN sale_type st1 ON rr.`one_level_id` = st1.`sale_type_id`
+            LEFT JOIN sale_type st2 ON rr.`two_level_id` = st2.`sale_type_id`
+            LEFT JOIN sale_type st3 ON rr.`three_level_id` = st3.`sale_type_id`
+            LEFT JOIN admin_info ai ON rr.`maintain_people_id` = ai.admin_id
+
+        WHERE dd.`declare_id` = #{declareId}
+              AND rr.`repair_record_id` IS NOT NULL
+    </select>
+
+    <!--查看当前申报的维护次数-->
+    <select id="findSaleNumById" resultType="java.lang.Integer">
+        SELECT num
+        FROM sale_num
+        WHERE declare_id = #{declareId}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+
+
+    <!--新增申报维护记录-->
+    <insert id="insertSaleNum" parameterType="com.cj.core.entity.SaleNum" keyProperty="saleNumId" useGeneratedKeys="true">
+        INSERT INTO sale_num(declare_id,num,founder_id,create_time)
+        VALUES (#{declareId},#{num},#{founderId},#{createTime})
+    </insert>
+
+
+    <resultMap id="findAllBySiteIdMap" type="com.cj.hafter.entity.DeclareVo">
+        <result column="declare_id" property="declareId"/>
+        <result column="com_time" property="comTime"/>
+    </resultMap>
+    <!--根据台站id查询历史申报列表-->
+    <select id="findAllBySiteId" resultMap="findAllBySiteIdMap">
+        SELECT declare_id,com_time
+        FROM declare_data
+        WHERE site_id = #{parameter}
+              AND handle_state = '已完成'
+    </select>
+
+
+    <resultMap id="findAllRecordsMap" type="com.cj.hafter.entity.DeclareVo">
+        <id property="declareId" jdbcType="BIGINT" column="declare_id"/>
+        <result property="contactsName" jdbcType="VARCHAR" column="contacts_name"/>
+        <result property="phone" jdbcType="VARCHAR" column="phone"/>
+        <result property="siteId" jdbcType="BIGINT" column="site_id"/>
+        <result property="declareType" jdbcType="CHAR" column="declare_type"/>
+        <result property="declareContent" jdbcType="VARCHAR" column="declare_content"/>
+        <result property="founderId" jdbcType="BIGINT" column="founder_id"/>
+        <result property="executorId" jdbcType="BIGINT" column="executor_id"/>
+        <result property="executionTime" jdbcType="TIMESTAMP" column="execution_time"/>
+        <result property="handleState" jdbcType="CHAR" column="handle_state"/>
+        <result property="createTime" jdbcType="TIMESTAMP" column="create_time"/>
+        <result column="role_name" property="roleName"/>
+        <result column="fname" property="founderName"/>
+        <result column="site_guarantee_time" property="siteGuaranteeTime"/>
+        <result column="site_name" property="siteName"/>
+        <result column="pname" property="provinceName"/>
+        <result column="cname" property="cityName"/>
+        <result column="exeName" property="executorName"/>
+        <result column="site_company_name" property="siteCompanyName"/>
+        <result column="item_number_name" property="itemNumberName"/>
+        <result column="project_manager" property="projectManager"/>
+        <result column="site_type_name" property="siteTypeName"/>
+        <result column="product_model_name" property="productModelName"/>
+        <result column="site_nature_name" property="siteNatureName"/>
+        <result column="site_usage_state_name" property="siteUsageStateName"/>
+        <result column="site_manufacture_time" property="siteManufactureTime"/>
+        <collection property="imgList"
+                    ofType="com.cj.core.entity.Resources" select="findDeclareImgById" column="declare_id">
+        </collection>
+    </resultMap>
+    <!--分页查询售后记录-->
+    <select id="findAllRecords" resultMap="findAllRecordsMap">
+        SELECT d.*,ar.`role_name`,ai.`full_name` AS `fname`,s.site_guarantee_time,s.`site_name`,r2.`name` AS pname,r3.`name` AS cname,ai2.`full_name` AS exeName
+            ,sc.`site_company_name`,i.`item_number_name`,s.`project_manager`,st.`site_type_name`,pm.`product_model_name`,
+            sn.`site_nature_name`,sus.`site_usage_state_name`,s.site_manufacture_time
+        FROM `declare_data` d
+            LEFT JOIN auth_customer_role acr ON d.`founder_id` = acr.`customer_id`
+            LEFT JOIN auth_role ar ON acr.`role_id` = ar.`role_id`
+            LEFT JOIN admin_info ai ON d.`founder_id` = ai.`admin_id`
+            LEFT JOIN `site` s ON d.`site_id` = s.`site_id`
+            LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+            LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+            LEFT JOIN admin_info ai2 ON d.`executor_id` = ai2.`admin_id`
+            LEFT JOIN site_company sc ON s.site_company_id = sc.`site_company_id`
+            LEFT JOIN item_number i ON s.item_number_id = i.`item_number_id`
+            LEFT JOIN site_type st ON s.site_type_id = st.`site_type_id`
+            LEFT JOIN product_model pm ON s.product_model_id = pm.`product_model_id`
+            LEFT JOIN site_nature sn ON s.site_nature_id = sn.`site_nature_id`
+            LEFT JOIN site_usage_state sus ON s.site_usage_state_id = sus.`site_usage_state_id`
+
+        WHERE (d.handle_state = '处理中' OR d.`handle_state` = '已完成')
+        <if test="parameter != null">
+            and  (
+            instr(d.declare_id, #{parameter}) > 0
+            OR instr(ai.`full_name`, #{parameter}) > 0
+            OR instr(d.contacts_name, #{parameter}) > 0
+            OR instr(d.phone, #{parameter}) > 0
+            OR instr(r2.`name`, #{parameter}) > 0
+            OR instr(r3.`name`, #{parameter}) > 0
+            OR instr(d.`create_time`, #{parameter}) > 0
+            OR instr(d.declare_type, #{parameter}) > 0
+            OR instr(s.`site_name`, #{parameter}) > 0
+            OR instr(ai2.`full_name` , #{parameter}) > 0
+            OR instr(sc.`site_company_name` , #{parameter}) > 0
+            OR instr(i.`item_number_name` , #{parameter}) > 0
+            OR instr(s.`project_manager` , #{parameter}) > 0
+            OR instr(st.`site_type_name` , #{parameter}) > 0
+            OR instr(pm.`product_model_name` , #{parameter}) > 0
+            OR instr(d.handle_state , #{parameter}) > 0
+            )
+        </if>
+    </select>
+
+    <!--查询最后维护人和最后维护时间-->
+    <select id="findLastMaintainPeopleAndTime" resultType="java.util.Map">
+
+        SELECT rr.`maintain_time` AS maintainTime,ai.`full_name` AS fullName
+        FROM declare_data d
+            LEFT JOIN sale_num sn ON d.declare_id = sn.`declare_id`
+            LEFT JOIN repair_record rr ON sn.`sale_num_id` = rr.`sale_num_id`
+            LEFT JOIN admin_info ai ON rr.`maintain_people_id` = ai.`admin_id`
+        WHERE d.`declare_id` = #{declareId}
+        ORDER BY rr.`maintain_time` DESC
+        LIMIT 1
+    </select>
+
+    <!--查询维护次数列表-->
+    <select id="findNumById" resultType="java.util.Map">
+        SELECT sale_num_id AS saleNumId,num,create_time AS createTime
+        FROM sale_num
+        WHERE declare_id = #{declareId}
+        ORDER BY num
+    </select>
+
+
+    <resultMap id="findRecordsByIdMap" type="com.cj.hafter.entity.RepairRecordVo">
+
+    </resultMap>
+    <!--查询维护详情-->
+    <select id="findRecordsById" resultMap="findRepairRecordMap">
+        SELECT rr.*,d.`device_name`,st1.`sale_type_name`  s1name,st2.`sale_type_name` s2name,st3.`sale_type_name` s3name,ai.full_name
+        FROM
+            repair_record rr
+            LEFT JOIN device d ON rr.`device_id` = d.`device_id`
+            LEFT JOIN sale_type st1 ON rr.`one_level_id` = st1.`sale_type_id`
+            LEFT JOIN sale_type st2 ON rr.`two_level_id` = st2.`sale_type_id`
+            LEFT JOIN sale_type st3 ON rr.`three_level_id` = st3.`sale_type_id`
+            LEFT JOIN admin_info ai ON rr.`maintain_people_id` = ai.admin_id
+
+        WHERE rr.`sale_num_id` = #{saleNumId}
+    </select>
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.common.mapper.CSiteMapper">
+
+
+
+  <resultMap id="findAllByIdsMap" type="com.cj.common.domain.CSiteVo">
+    <result column="site_id" property="siteId"/>
+    <result column="site_name" property="siteName"/>
+  </resultMap>
+  <!--按地区、类型查询站点列表-->
+  <select id="findAllByIds" resultMap="findAllByIdsMap">
+    SELECT site_id,site_name
+    FROM site
+    WHERE 1=1
+      <if test="type!=null and type!=0">
+       and site_type_id = #{type}
+      </if>
+    <if test="pid!=null and pid!=0">
+      AND site_province_id = #{pid}
+    </if>
+    <if test="cid!=null and cid!=0">
+      AND site_city_id = #{cid}
+    </if>
+  </select>
+</mapper>

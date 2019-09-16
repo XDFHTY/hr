@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hpatrol.mapper.PTSPatrolMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.PatrolTaskStation" >
+    <id column="patrol_task_station_id" property="patrolTaskStationId" jdbcType="BIGINT" />
+    <result column="patrol_task_province_id" property="patrolTaskProvinceId" jdbcType="BIGINT" />
+    <result column="site_id" property="siteId" jdbcType="BIGINT" />
+    <result column="patrol_id" property="patrolId" jdbcType="BIGINT" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="reach_time" property="reachTime" jdbcType="TIMESTAMP" />
+    <result column="leave_time" property="leaveTime" jdbcType="TIMESTAMP" />
+    <result column="upload_time" property="uploadTime" jdbcType="TIMESTAMP" />
+    <result column="patrol_state" property="patrolState" jdbcType="CHAR" />
+  </resultMap>
+  <!--查询巡查任务中台站任务是否有已完成-->
+  <select id="findStateByPatrolTaskProvinceId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    SELECT *
+    FROM patrol_task_station
+    WHERE patrol_task_province_id = #{patrolTaskProvinceId}
+    AND patrol_state = '1'
+  </select>
+  <resultMap id="PatrolTaskStationMod" type="com.cj.hpatrol.domain.PatrolTaskStationModel">
+    <id column="patrol_task_station_id" property="patrolTaskStationId" jdbcType="BIGINT" />
+    <result column="patrol_task_province_id" property="patrolTaskProvinceId" jdbcType="BIGINT" />
+    <result column="site_id" property="siteId" jdbcType="BIGINT" />
+    <result column="patrol_id" property="patrolId" jdbcType="BIGINT" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="reach_time" property="reachTime" jdbcType="TIMESTAMP" />
+    <result column="leave_time" property="leaveTime" jdbcType="TIMESTAMP" />
+    <result column="upload_time" property="uploadTime" jdbcType="TIMESTAMP" />
+    <result column="patrol_state" property="patrolState" jdbcType="CHAR" />
+    <result column="patrolName" property="patrolName" jdbcType="VARCHAR" />
+    <result column="site_name" property="siteName" jdbcType="VARCHAR" />
+    <result column="site_num" property="siteNum" jdbcType="VARCHAR" />
+    <result column="provinceName" property="siteProvinceName" jdbcType="VARCHAR" />
+    <result column="cityName" property="siteCityName" jdbcType="VARCHAR" />
+    <result column="role_name" property="roleName" jdbcType="VARCHAR" />
+    <result column="site_company_name" property="siteCompanyName" jdbcType="VARCHAR" />
+    <result column="item_number_name" property="itemNumber" jdbcType="VARCHAR" />
+    <result column="site_type_name" property="siteType" jdbcType="VARCHAR" />
+  </resultMap>
+  <!--根据巡查任务省id查询-->
+  <select id="findByPatrolTaskProvinceId" resultMap="PatrolTaskStationMod" parameterType="java.lang.Long">
+    SELECT pts.* ,ai.full_name patrolName ,s.site_name,
+    s.site_num,ar.role_name,r1.name provinceName ,r2.name cityName,sc.site_company_name,
+    inu.item_number_name,st.site_type_name
+    FROM patrol_task_station pts
+    LEFT JOIN site s ON pts.site_id = s.site_id
+    LEFT JOIN item_number inu ON s.item_number_id = inu.item_number_id
+    LEFT JOIN site_type st ON s.site_type_id = st.site_type_id
+    LEFT JOIN site_company sc ON s.site_company_id = sc.site_company_id
+    LEFT JOIN region_2017 r1 ON s.site_province_id = r1.id
+    LEFT JOIN region_2017 r2 ON s.site_city_id = r2.id
+    LEFT JOIN admin_info ai ON pts.patrol_id = ai.admin_id
+    LEFT JOIN auth_customer_role acr ON ai.admin_id = acr.customer_id
+    LEFT JOIN auth_role ar ON acr.role_id = ar.role_id
+    WHERE pts.patrol_task_province_id = #{patrolTaskProvinceId}
+  </select>
+  <!--查询条数-->
+  <select id="findCount" resultType="java.lang.Integer" parameterType="com.cj.core.domain.Pager">
+    SELECT COUNT(DISTINCT pts.patrol_task_province_id)
+    FROM patrol_task_station pts
+    LEFT JOIN site s ON pts.site_id = s.site_id
+    LEFT JOIN region_2017 r1 ON s.site_province_id = r1.id
+    LEFT JOIN region_2017 r2 ON s.site_city_id = r2.id
+    LEFT JOIN admin_info ai ON pts.patrol_id = ai.admin_id
+    LEFT JOIN auth_customer_role acr ON ai.admin_id = acr.customer_id
+    LEFT JOIN auth_role ar ON acr.role_id = ar.role_id
+    <where>
+      <if test="parameter != null">
+        (
+        instr(pts.upload_time, #{parameter}) > 0
+        OR instr(pts.reach_time, #{parameter}) > 0
+        OR instr(pts.leave_time, #{parameter}) > 0
+        OR instr(ai.full_name, #{parameter}) > 0
+        OR instr(ar.role_name, #{parameter}) > 0
+        OR instr(r1.name, #{parameter}) > 0
+        OR instr(r2.name, #{parameter}) > 0
+        OR instr(s.site_name, #{parameter}) > 0
+        OR instr(s.site_num, #{parameter}) > 0
+        )
+      </if>
+    </where>
+  </select>
+  <!--查询内容-->
+  <select id="findPage" resultMap="PatrolTaskStationMod" parameterType="com.cj.core.domain.Pager">
+    SELECT pts.* ,ai.full_name patrolName ,s.site_name,
+    s.site_num,ar.role_name,r1.name provinceName ,r2.name cityName,sc.site_company_name,
+    inu.item_number_name,st.site_type_name
+    FROM patrol_task_station pts
+    LEFT JOIN site s ON pts.site_id = s.site_id
+    LEFT JOIN item_number inu ON s.item_number_id = inu.item_number_id
+    LEFT JOIN site_type st ON s.site_type_id = st.site_type_id
+    LEFT JOIN site_company sc ON s.site_company_id = sc.site_company_id
+    LEFT JOIN region_2017 r1 ON s.site_province_id = r1.id
+    LEFT JOIN region_2017 r2 ON s.site_city_id = r2.id
+    LEFT JOIN admin_info ai ON pts.patrol_id = ai.admin_id
+    LEFT JOIN auth_customer_role acr ON ai.admin_id = acr.customer_id
+    LEFT JOIN auth_role ar ON acr.role_id = ar.role_id
+    <where>
+      <if test="parameter != null">
+        (
+        instr(pts.upload_time, #{parameter}) > 0
+        OR instr(pts.reach_time, #{parameter}) > 0
+        OR instr(pts.leave_time, #{parameter}) > 0
+        OR instr(ai.full_name, #{parameter}) > 0
+        OR instr(ar.role_name, #{parameter}) > 0
+        OR instr(r1.name, #{parameter}) > 0
+        OR instr(r2.name, #{parameter}) > 0
+        OR instr(s.site_name, #{parameter}) > 0
+        OR instr(s.site_num, #{parameter}) > 0
+        )
+      </if>
+    </where>
+  </select>
+  <!--根据巡查任务省id删除-->
+  <delete id="deleteByPatrolTaskProvinceId" parameterType="java.lang.Long">
+    DELETE FROM patrol_task_station WHERE patrol_task_province_id = #{patrolTaskProvinceId}
+  </delete>
+</mapper>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hsys.mapper.AdminInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.hsys.domain.VoAdminInfo" >
+    <id column="admin_info_id" property="adminInfoId" jdbcType="BIGINT" />
+    <result column="admin_id" property="adminId" jdbcType="BIGINT" />
+    <result column="department_id" property="departmentId" jdbcType="BIGINT" />
+    <result column="full_name" property="fullName" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="city_id" property="cityId" jdbcType="BIGINT" />
+    <result column="heard_url" property="heardUrl" jdbcType="VARCHAR" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+
+    <result column="department_name" property="departmentName"/>
+  </resultMap>
+  <sql id="Base_Column_List" >
+    admin_info_id, admin_id, department_id, full_name, phone, province_id, city_id, heard_url, 
+    nick_name
+  </sql>
+
+  <select id="findAdminInfoByAdminId" parameterType="long" resultMap="BaseResultMap">
+    SELECT
+    ai.*,
+    d.department_name
+    FROM admin_info ai
+    LEFT JOIN department d ON d.department_id = ai.department_id
+    WHERE
+    ai.admin_id = #{adminId}
+  </select>
+</mapper>

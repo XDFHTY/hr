@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hbasic.mapper.SitesMapper" >
+
+
+
+    <resultMap id="selectBySiteIdMap" type="com.cj.hbasic.domian.SiteVo">
+        <id jdbcType="BIGINT" property="siteId" column="site_id"/>
+        <result jdbcType="VARCHAR" property="siteName" column="site_name"/>
+        <result jdbcType="VARCHAR" property="siteNum" column="site_num"/>
+        <result jdbcType="DECIMAL" property="siteLongitude" column="site_longitude"/>
+        <result jdbcType="DECIMAL" property="siteLatitude" column="site_latitude"/>
+        <result jdbcType="VARCHAR" property="siteAddress" column="site_address"/>
+        <result jdbcType="BIGINT" property="siteProvinceId" column="site_province_id"/>
+        <result jdbcType="BIGINT" property="siteCityId" column="site_city_id"/>
+        <result jdbcType="BIGINT" property="siteArea" column="site_area"/>
+        <result jdbcType="BIGINT" property="siteCompanyId" column="site_company_id"/>
+        <result jdbcType="VARCHAR" property="siteSystemType" column="site_system_type"/>
+        <result jdbcType="BIGINT" property="productModelId" column="product_model_id"/>
+        <result jdbcType="BIGINT" property="itemNumberId" column="item_number_id"/>
+        <result jdbcType="VARCHAR" property="projectManager" column="project_manager"/>
+        <result jdbcType="BIGINT" property="siteTypeId" column="site_type_id"/>
+        <result jdbcType="TIMESTAMP" property="siteManufactureTime" column="site_manufacture_time"/>
+        <result jdbcType="TIMESTAMP" property="siteGuaranteeTime" column="site_guarantee_time"/>
+        <result jdbcType="TIMESTAMP" property="siteAcceptanceTime" column="site_acceptance_time"/>
+        <result jdbcType="VARCHAR" property="integrateFirm" column="integrate_firm"/>
+        <result jdbcType="BIGINT" property="siteNatureId" column="site_nature_id"/>
+        <result jdbcType="BIGINT" property="siteUsageStateId" column="site_usage_state_id"/>
+        <result jdbcType="VARCHAR" property="antennaHeight" column="antenna_height"/>
+        <result jdbcType="VARCHAR" property="siteSerialNumber" column="site_serial_number"/>
+        <result jdbcType="VARCHAR" property="coreEquipment" column="core_equipment"/>
+        <result jdbcType="VARCHAR" property="operSysVirsion" column="oper_sys_virsion"/>
+        <result jdbcType="VARCHAR" property="monSoftVersion" column="mon_soft_version"/>
+        <result jdbcType="VARCHAR" property="otherSoftInfo" column="other_soft_info"/>
+        <result jdbcType="CHAR" property="isShutdown" column="is_shutdown"/>
+        <result jdbcType="VARCHAR" property="siteDescribe" column="site_describe"/>
+        <result jdbcType="CHAR" property="siteSaleState" column="site_sale_state"/>
+        <result jdbcType="TIMESTAMP" property="createTime" column="create_time"/>
+        <result jdbcType="CHAR" property="isDeleteState" column="is_delete_state"/>
+        <result column="provinceName" property="provinceName"/>
+        <result column="cityName" property="cityName"/>
+        <result column="site_company_name" property="siteCompanyName"/>
+        <result column="product_model_name" property="productModelName"/>
+        <result column="item_number_name" property="itemNumberName"/>
+        <result column="site_type_name" property="siteTypeName"/>
+        <result column="site_nature_name" property="siteNatureName"/>
+        <result column="site_usage_state_name" property="siteUsageStateName"/>
+        <collection property="imgList"
+                    ofType="com.cj.core.entity.Resources" select="findSiteImgById" column="site_id">
+        </collection>
+    </resultMap>
+    <resultMap type="com.cj.core.entity.Resources" id="findSiteImgByIdMap">
+    <id jdbcType="BIGINT" property="resourceId" column="resource_id"/>
+    <result jdbcType="VARCHAR" property="resourceUrl" column="resource_url"/>
+    <result jdbcType="CHAR" property="resourceType" column="resource_type"/>
+    <result jdbcType="BIGINT" property="relationId" column="relation_id"/>
+    <result jdbcType="VARCHAR" property="fileName" column="file_name"/>
+    <result jdbcType="TIMESTAMP" property="createTime" column="create_time"/>
+    <result jdbcType="BIGINT" property="founderId" column="founder_id"/>
+    </resultMap>
+    <select id="findSiteImgById" resultMap="findSiteImgByIdMap">
+        SELECT *
+        FROM resources
+        WHERE relation_id = #{siteId}
+              AND resource_type = '台站图片'
+    </select>
+    <!--根据id查看台站信息 + 图片-->
+    <select id="selectBySiteId" resultMap="selectBySiteIdMap">
+        SELECT s.*,
+            r2.`name` AS provinceName,r3.`name` AS cityName,sc.`site_company_name`,pm.`product_model_name`
+            ,i.`item_number_name`,st.`site_type_name`,sn.`site_nature_name`,sus.`site_usage_state_name`
+        FROM site s
+
+            LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+            LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+            LEFT JOIN site_company sc ON s.`site_company_id` = sc.`site_company_id`
+            LEFT JOIN product_model pm ON s.`product_model_id` = pm.`product_model_id`
+            LEFT JOIN item_number i ON s.item_number_id = i.`item_number_id`
+            LEFT JOIN site_type st ON s.site_type_id = st.`site_type_id`
+            LEFT JOIN site_nature sn ON s.site_nature_id = sn.`site_nature_id`
+            LEFT JOIN site_usage_state sus ON s.site_usage_state_id = sus.`site_usage_state_id`
+        WHERE s.`site_id` = #{siteId}
+
+    </select>
+
+
+    <!--分页查询站点-->
+    <select id="findAll" resultMap="selectBySiteIdMap" parameterType="com.cj.core.domain.Pager">
+        SELECT s.*,
+        r2.`name` AS provinceName,r3.`name` AS cityName,sc.`site_company_name`,pm.`product_model_name`
+        ,i.`item_number_name`,st.`site_type_name`,sn.`site_nature_name`,sus.`site_usage_state_name`
+        FROM site s
+        LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+        LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+        LEFT JOIN site_company sc ON s.`site_company_id` = sc.`site_company_id`
+        LEFT JOIN product_model pm ON s.`product_model_id` = pm.`product_model_id`
+        LEFT JOIN item_number i ON s.item_number_id = i.`item_number_id`
+        LEFT JOIN site_type st ON s.site_type_id = st.`site_type_id`
+        LEFT JOIN site_nature sn ON s.site_nature_id = sn.`site_nature_id`
+        LEFT JOIN site_usage_state sus ON s.site_usage_state_id = sus.`site_usage_state_id`
+        WHERE s.`is_delete_state` = '1'
+        <if test="parameter != null">
+           and  (
+            instr(s.site_name, #{parameter}) > 0
+            OR instr(s.site_num, #{parameter}) > 0
+            OR instr(s.site_longitude, #{parameter}) > 0
+            OR instr(s.site_latitude, #{parameter}) > 0
+            OR instr(s.site_address, #{parameter}) > 0
+            OR instr(r2.`name`, #{parameter}) > 0
+            OR instr(r3.`name`, #{parameter}) > 0
+            OR instr(sc.`site_company_name`, #{parameter}) > 0
+            OR instr(s.site_system_type, #{parameter}) > 0
+            OR instr(pm.`product_model_name`, #{parameter}) > 0
+            OR instr(i.`item_number_name`, #{parameter}) > 0
+            OR instr(s.project_manager, #{parameter}) > 0
+            OR instr(st.`site_type_name`, #{parameter}) > 0
+            OR instr(s.site_manufacture_time, #{parameter}) > 0
+            OR instr(s.site_guarantee_time, #{parameter}) > 0
+            OR instr(s.site_acceptance_time, #{parameter}) > 0
+            OR instr(s.integrate_firm, #{parameter}) > 0
+            OR instr(sn.`site_nature_name`, #{parameter}) > 0
+            OR instr(sus.`site_usage_state_name`, #{parameter}) > 0
+            OR instr(s.antenna_height, #{parameter}) > 0
+            OR instr(s.site_serial_number, #{parameter}) > 0
+            OR instr(s.core_equipment, #{parameter}) > 0
+            OR instr(s.oper_sys_virsion, #{parameter}) > 0
+            OR instr(s.mon_soft_version, #{parameter}) > 0
+            OR instr(s.other_soft_info, #{parameter}) > 0
+            OR instr(s.is_shutdown, #{parameter}) > 0
+            OR instr(s.site_describe, #{parameter}) > 0
+            )
+        </if>
+        <if test="parameters != null">
+            <if test="parameters.pid != null">
+                AND s.site_province_id = #{parameters.pid}
+            </if>
+            <if test="parameters.cid != null">
+                and s.`site_city_id` = #{parameters.cid}
+            </if>
+            <if test="parameters.siteTypeId != null">
+                and s.`site_type_id` = #{parameters.siteTypeId}
+            </if>
+        </if>
+
+    </select>
+
+    <!--分页查询站点 计数-->
+    <select id="findAllCount" resultType="java.lang.Integer" parameterType="com.cj.core.domain.Pager">
+        SELECT count(*)
+        FROM site s
+        LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+        LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+        LEFT JOIN site_company sc ON s.`site_company_id` = sc.`site_company_id`
+        LEFT JOIN product_model pm ON s.`product_model_id` = pm.`product_model_id`
+        LEFT JOIN item_number i ON s.item_number_id = i.`item_number_id`
+        LEFT JOIN site_type st ON s.site_type_id = st.`site_type_id`
+        LEFT JOIN site_nature sn ON s.site_nature_id = sn.`site_nature_id`
+        LEFT JOIN site_usage_state sus ON s.site_usage_state_id = sus.`site_usage_state_id`
+        WHERE s.`is_delete_state` = '1'
+        <if test="parameter != null">
+           and (
+            instr(s.site_name, #{parameter}) > 0
+            OR instr(s.site_num, #{parameter}) > 0
+            OR instr(s.site_longitude, #{parameter}) > 0
+            OR instr(s.site_latitude, #{parameter}) > 0
+            OR instr(s.site_address, #{parameter}) > 0
+            OR instr(r2.`name`, #{parameter}) > 0
+            OR instr(r3.`name`, #{parameter}) > 0
+            OR instr(sc.`site_company_name`, #{parameter}) > 0
+            OR instr(s.site_system_type, #{parameter}) > 0
+            OR instr(pm.`product_model_name`, #{parameter}) > 0
+            OR instr(i.`item_number_name`, #{parameter}) > 0
+            OR instr(s.project_manager, #{parameter}) > 0
+            OR instr(st.`site_type_name`, #{parameter}) > 0
+            OR instr(s.site_manufacture_time, #{parameter}) > 0
+            OR instr(s.site_guarantee_time, #{parameter}) > 0
+            OR instr(s.site_acceptance_time, #{parameter}) > 0
+            OR instr(s.integrate_firm, #{parameter}) > 0
+            OR instr(sn.`site_nature_name`, #{parameter}) > 0
+            OR instr(sus.`site_usage_state_name`, #{parameter}) > 0
+            OR instr(s.antenna_height, #{parameter}) > 0
+            OR instr(s.site_serial_number, #{parameter}) > 0
+            OR instr(s.core_equipment, #{parameter}) > 0
+            OR instr(s.oper_sys_virsion, #{parameter}) > 0
+            OR instr(s.mon_soft_version, #{parameter}) > 0
+            OR instr(s.other_soft_info, #{parameter}) > 0
+            OR instr(s.is_shutdown, #{parameter}) > 0
+            OR instr(s.site_describe, #{parameter}) > 0
+            )
+        </if>
+    </select>
+
+    <resultMap id="findPatrolTaskByIdMap" type="com.cj.hbasic.domian.PatrolTask">
+        <result property="patrolTaskStationId" column="patrol_task_station_id"/>
+        <result property="uploadTime" column="upload_time"/>
+        <result property="reachTime" column="reach_time"/>
+        <result property="leaveTime" column="leave_time"/>
+        <result property="patrolId" column="patrol_id"/>
+        <result property="patrolName" column="full_name"/>
+        <result property="roleName" column="role_name"/>
+        <result property="departmentName" column="department_name"/>
+    </resultMap>
+    <!--根据台站id  查询巡检记录-->
+    <select id="findPatrolTaskById" parameterType="com.cj.core.domain.Pager" resultMap="findPatrolTaskByIdMap">
+        SELECT pts.*,ai.`full_name`,ar.`role_name`,d.`department_name`
+        FROM patrol_task_station pts
+            LEFT JOIN admin_info ai ON pts.`patrol_id` = ai.`admin_id`
+            LEFT JOIN auth_customer_role acr ON pts.`patrol_id` = acr.`customer_id`
+            LEFT JOIN auth_role ar ON acr.`role_id` = ar.`role_id`
+            LEFT JOIN department d ON ai.`department_id` = d.`department_id`
+        WHERE pts.`site_id` = #{parameter} AND pts.`patrol_state` = '1'
+        order by pts.upload_time desc
+    </select>
+
+
+    <!--查询台站信息-->
+    <select id="findDataScreen" resultMap="selectBySiteIdMap">
+        SELECT s.*,
+        r2.`name` AS provinceName,r3.`name` AS cityName,sc.`site_company_name`,pm.`product_model_name`
+        ,i.`item_number_name`,st.`site_type_name`,sn.`site_nature_name`,sus.`site_usage_state_name`
+        FROM site s
+        LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+        LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+        LEFT JOIN site_company sc ON s.`site_company_id` = sc.`site_company_id`
+        LEFT JOIN product_model pm ON s.`product_model_id` = pm.`product_model_id`
+        LEFT JOIN item_number i ON s.item_number_id = i.`item_number_id`
+        LEFT JOIN site_type st ON s.site_type_id = st.`site_type_id`
+        LEFT JOIN site_nature sn ON s.site_nature_id = sn.`site_nature_id`
+        LEFT JOIN site_usage_state sus ON s.site_usage_state_id = sus.`site_usage_state_id`
+        WHERE s.`is_delete_state` = '1'
+
+        <if test="pid != null and pid != 0">
+                AND s.site_province_id = #{pid}
+        </if>
+        <if test="cid != null and cid != 0">
+                and s.`site_city_id` = #{cid}
+        </if>
+        <if test="typeId != null and typeId != 0">
+            and s.`site_type_id` = #{typeId}
+        </if>
+
+    </select>
+
+    <resultMap id="findSiteStateMap" type="com.cj.hbasic.domian.SiteStateVo">
+        <result column="total" property="siteTotal"/>
+        <result column="nor" property="normalNmu"/>
+        <result column="abn" property="abnormalNum"/>
+        <result column="inp" property="maintainNum"/>
+    </resultMap>
+    <!--统计站点状态-->
+    <select id="findSiteState" resultMap="findSiteStateMap">
+        SELECT
+            SUM(
+                    CASE
+                    site_sale_state
+                    WHEN 1
+                        THEN 1
+                    ELSE 0
+                    END
+            ) nor,
+            SUM(
+                    CASE
+                    site_sale_state
+                    WHEN 2
+                        THEN 1
+                    ELSE 0
+                    END
+            ) inp,
+            SUM(
+                    CASE
+                    site_sale_state
+                    WHEN 3
+                        THEN 1
+                    ELSE 0
+                    END
+            ) abn,
+        COUNT(*) AS total
+        FROM
+            site
+        WHERE  is_delete_state = '1'
+        <if test="pid != null and pid != 0">
+            AND site_province_id = #{pid}
+        </if>
+        <if test="cid != null and cid != 0">
+            and `site_city_id` = #{cid}
+        </if>
+        <if test="typeId != null and typeId != 0">
+            and `site_type_id` = #{typeId}
+        </if>
+    </select>
+
+    <!--查询最后维护人 和最后维护时间-->
+    <select id="selectMaintain" resultType="java.util.Map" parameterType="java.lang.Long">
+        SELECT rr.`maintain_time`,rr.`maintain_people_id`,ai.`full_name`
+        FROM site s
+
+            LEFT JOIN `declare_data` d ON s.`site_id` = d.`site_id`
+            LEFT JOIN sale_num sn ON sn.`declare_id` = d.`declare_id`
+
+            LEFT JOIN repair_record rr ON sn.`sale_num_id` = rr.`sale_num_id`
+            LEFT JOIN admin_info ai ON rr.`maintain_people_id` = ai.`admin_id`
+        WHERE s.`site_id` = #{siteId}
+              AND s.`is_delete_state` = '1'
+        ORDER BY rr.`maintain_time` DESC
+        LIMIT 1
+    </select>
+</mapper>

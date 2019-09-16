@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hpatrol.mapper.PTPPatrolMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.PatrolTaskProvince" >
+    <id column="patrol_task_province_id" property="patrolTaskProvinceId" jdbcType="BIGINT" />
+    <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+    <result column="patrol_id" property="patrolId" jdbcType="BIGINT" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="task_type" property="taskType" jdbcType="CHAR" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    patrol_task_province_id, task_name, patrol_id, province_id, task_type, start_time, 
+    end_time
+  </sql>
+  <resultMap id="PatrolTaskMod" type="com.cj.hpatrol.domain.PatrolTaskModel">
+    <id column="patrol_task_province_id" property="patrolTaskProvinceId" jdbcType="BIGINT" />
+    <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+    <result column="patrol_id" property="patrolId" jdbcType="BIGINT" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="task_type" property="taskType" jdbcType="CHAR" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="provinceName" property="provinceName" jdbcType="VARCHAR" />
+    <result column="patrolName" property="patrolName" jdbcType="VARCHAR" />
+    <collection property="listTSM"
+                column="patrol_task_province_id"
+                ofType="com.cj.hpatrol.domain.PatrolTaskStationModel"
+                select="com.cj.hpatrol.mapper.PTSPatrolMapper.findByPatrolTaskProvinceId"/>
+  </resultMap>
+  <!--查询条数-->
+  <select id="findCount" resultType="java.lang.Integer" parameterType="com.cj.core.domain.Pager">
+    SELECT COUNT(DISTINCT patrol_task_province_id)
+    FROM patrol_task_province ptp
+    LEFT JOIN region_2017 re ON ptp.province_id = re.id
+    LEFT JOIN admin_info ai ON ptp.patrol_id = admin_id
+    <where>
+      <if test="parameter != null">
+        (
+          instr(ptp.task_name, #{parameter}) > 0
+          OR instr(ptp.start_time, #{parameter}) > 0
+          OR instr(ptp.end_time, #{parameter}) > 0
+          OR instr(ptp.task_type, #{parameter}) > 0
+          OR instr(ai.full_name, #{parameter}) > 0
+          OR instr(re.`name`, #{parameter}) > 0
+        )
+      </if>
+    </where>
+  </select>
+
+  <!--查询内容-->
+  <select id="findPage" resultMap="PatrolTaskMod" parameterType="com.cj.core.domain.Pager">
+    SELECT ptp.*,re.name provinceName,ai.full_name patrolName
+    FROM patrol_task_province ptp
+    LEFT JOIN region_2017 re ON ptp.province_id = re.id
+    LEFT JOIN admin_info ai ON ptp.patrol_id = admin_id
+    <where>
+      <if test="parameter != null">
+        (
+        instr(ptp.task_name, #{parameter}) > 0
+        OR instr(ptp.start_time, #{parameter}) > 0
+        OR instr(ptp.end_time, #{parameter}) > 0
+        OR instr(ptp.task_type, #{parameter}) > 0
+        OR instr(ai.full_name, #{parameter}) > 0
+        OR instr(re.`name`, #{parameter}) > 0
+        )
+      </if>
+    </where>
+  </select>
+
+  <!--根据用户查询巡查未完成的任务-->
+  <select id="findCycle" resultMap="PatrolTaskMod" parameterType="com.cj.core.domain.Pager">
+    SELECT ptp.*,re.name provinceName,ai.full_name patrolName
+    FROM patrol_task_province ptp
+    LEFT JOIN patrol_task_station pts
+    ON ptp.patrol_task_province_id = pts.patrol_task_province_id
+    LEFT JOIN site s ON pts.site_id = s.site_id
+    LEFT JOIN region_2017 re ON ptp.province_id = re.id
+    LEFT JOIN admin_info ai ON ptp.patrol_id = admin_id
+    <where>
+      pts.patrol_state = '0'
+      <if test="parameter != null">
+      AND ptp.patrol_id = #{parameter}
+    </if>
+      <if test="parameter == null">
+        AND ptp.patrol_id IS NULL
+      </if>
+      <if test="parameters != null">
+        <if test="parameters.pid != null">
+          AND s.site_province_id = #{parameters.pid}
+        </if>
+        <if test="parameters.cid != null">
+          AND s.site_city_id = #{parameters.cid}
+        </if>
+      </if>
+
+    </where>
+    GROUP BY ptp.patrol_task_province_id
+  </select>
+  <!--根据用户查询巡查任务历史-->
+  <select id="findHistory" resultMap="PatrolTaskMod" parameterType="com.cj.core.domain.Pager">
+    SELECT ptp.*,re.name provinceName,ai.full_name patrolName
+    FROM patrol_task_province ptp
+    LEFT JOIN patrol_task_station pts
+    ON ptp.patrol_task_province_id = pts.patrol_task_province_id
+    LEFT JOIN region_2017 re ON ptp.province_id = re.id
+    LEFT JOIN admin_info ai ON ptp.patrol_id = admin_id
+    WHERE
+    pts.patrol_state != '0'
+    AND ptp.patrol_id = #{parameter}
+    GROUP BY ptp.patrol_task_province_id
+  </select>
+  <!--根据台站查询巡查任务-->
+  <select id="findBySiteId" resultMap="PatrolTaskMod" parameterType="com.cj.core.domain.Pager">
+    SELECT ptp.*,re.name provinceName,ai.full_name patrolName
+    FROM patrol_task_province ptp
+    LEFT JOIN patrol_task_station pts
+    ON ptp.patrol_task_province_id = pts.patrol_task_province_id
+    LEFT JOIN region_2017 re ON ptp.province_id = re.id
+    LEFT JOIN admin_info ai ON ptp.patrol_id = admin_id
+    WHERE
+    pts.patrol_state = '0'
+    AND pts.site_id = #{parameter}
+    AND (ptp.patrol_id = #{parameters.id} OR ptp.patrol_id IS NULL)
+    GROUP BY ptp.patrol_task_province_id
+  </select>
+</mapper>

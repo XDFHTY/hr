@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hbasic.mapper.DeviceMapper" >
+
+
+
+    <resultMap id="findDevicesBySiteIdMap" type="com.cj.hbasic.domian.DeviceVo">
+        <id jdbcType="BIGINT" property="deviceId" column="device_id"/>
+        <result jdbcType="BIGINT" property="siteId" column="site_id"/>
+        <result jdbcType="VARCHAR" property="deviceSystemNum" column="device_system_num"/>
+        <result jdbcType="VARCHAR" property="deviceName" column="device_name"/>
+        <result jdbcType="VARCHAR" property="deviceModel" column="device_model"/>
+        <result jdbcType="VARCHAR" property="deviceSerialNum" column="device_serial_num"/>
+        <result jdbcType="VARCHAR" property="deviceDescribe" column="device_describe"/>
+        <result jdbcType="CHAR" property="deviceState" column="device_state"/>
+        <result jdbcType="TIMESTAMP" property="createTime" column="create_time"/>
+        <result jdbcType="CHAR" property="isDeleteState" column="is_delete_state"/>
+
+        <result jdbcType="VARCHAR" property="siteName" column="site_name"/>
+        <result jdbcType="BIGINT" property="siteProvinceId" column="site_province_id"/>
+        <result jdbcType="BIGINT" property="siteCityId" column="site_city_id"/>
+        <result column="provinceName" property="provinceName"/>
+        <result column="cityName" property="cityName"/>
+        <collection property="imgList"
+                    ofType="com.cj.core.entity.Resources" select="findDeviceImgById" column="device_id">
+        </collection>
+    </resultMap>
+    <resultMap type="com.cj.core.entity.Resources" id="findDeviceImgByIdMap">
+    <id jdbcType="BIGINT" property="resourceId" column="resource_id"/>
+    <result jdbcType="VARCHAR" property="resourceUrl" column="resource_url"/>
+    <result jdbcType="CHAR" property="resourceType" column="resource_type"/>
+    <result jdbcType="BIGINT" property="relationId" column="relation_id"/>
+    <result jdbcType="VARCHAR" property="fileName" column="file_name"/>
+    <result jdbcType="TIMESTAMP" property="createTime" column="create_time"/>
+    <result jdbcType="BIGINT" property="founderId" column="founder_id"/>
+    </resultMap>
+    <select id="findDeviceImgById" resultMap="findDeviceImgByIdMap">
+        SELECT *
+        FROM resources
+        WHERE relation_id = #{deviceId}
+              AND resource_type = '设备图片'
+    </select>
+    <!--根据台站id查询设备列表 + 图片-->
+    <select id="findDevicesBySiteId" resultMap="findDevicesBySiteIdMap" parameterType="com.cj.core.domain.Pager">
+        SELECT d.*,s.`site_name`,s.`site_province_id`, r2.`name` AS provinceName ,s.`site_city_id`,r3.`name` AS cityName
+        FROM device d
+            LEFT JOIN site s ON d.`site_id` = s.`site_id`
+            LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+            LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+        WHERE d.`site_id` = #{parameter}
+              AND d.`is_delete_state` = '1'
+    </select>
+
+
+    <!--分页查询归属地下的 设备列表-->
+    <select id="findAll"  resultMap="findDevicesBySiteIdMap" parameterType="com.cj.core.domain.Pager">
+        SELECT d.*,s.`site_name`,s.`site_province_id`, r2.`name` AS provinceName ,s.`site_city_id`,r3.`name` AS cityName
+        FROM device d
+            LEFT JOIN site s ON d.`site_id` = s.`site_id`
+            LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+            LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+        WHERE d.`is_delete_state` = '1'
+        <if test="parameter != null">
+            and  (
+            instr(s.site_name, #{parameter}) > 0
+            OR instr(d.device_system_num, #{parameter}) > 0
+            OR instr(d.device_name, #{parameter}) > 0
+            OR instr(d.device_model, #{parameter}) > 0
+            OR instr(d.device_serial_num, #{parameter}) > 0
+            OR instr(d.`device_describe`, #{parameter}) > 0
+            OR instr(r3.`name`, #{parameter}) > 0
+            OR instr(r2.`name`, #{parameter}) > 0
+            )
+        </if>
+        <if test="parameters != null">
+            <if test="parameters.pid != null">
+                AND s.site_province_id = #{parameters.pid}
+            </if>
+            <if test="parameters.cid != null">
+                and s.`site_city_id` = #{parameters.cid}
+            </if>
+        </if>
+
+    </select>
+
+    <!--根据设备id 查询设备详情-->
+    <select id="findDevicesByDeviceId" resultMap="findDevicesBySiteIdMap" parameterType="java.lang.Integer">
+        SELECT d.*,s.`site_name`,s.`site_province_id`, r2.`name` AS provinceName ,s.`site_city_id`,r3.`name` AS cityName
+        FROM device d
+            LEFT JOIN site s ON d.`site_id` = s.`site_id`
+            LEFT JOIN region_2017 r2 ON s.`site_province_id` = r2.`id`
+            LEFT JOIN region_2017 r3 ON s.`site_city_id` = r3.`id`
+        WHERE d.`device_id` = #{deviceId}
+              AND d.`is_delete_state` = '1'
+    </select>
+
+    <!--统计设备维护次数-->
+    <select id="findDevicesNum" resultType="java.lang.Integer" parameterType="java.lang.Integer">
+        SELECT  COUNT(DISTINCT sale_num_id) AS num
+        FROM repair_record
+        WHERE device_id = #{deviceId}
+    </select>
+
+
+</mapper>

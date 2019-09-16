@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hafter.mapper.STMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.SaleType" >
+    <id column="sale_type_id" property="saleTypeId" jdbcType="BIGINT" />
+    <result column="parent_id" property="parentId" jdbcType="BIGINT" />
+    <result column="sale_type_name" property="saleTypeName" jdbcType="VARCHAR" />
+    <result column="level" property="level" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="BCMod" type="com.cj.hafter.entity.BCModel">
+    <result column="aid" property="id" jdbcType="BIGINT" />
+    <result column="aname" property="name" jdbcType="VARCHAR" />
+    <collection property="child" ofType="com.cj.hafter.entity.BCModel">
+      <result column="bid" property="id" jdbcType="BIGINT" />
+      <result column="bname" property="name" jdbcType="VARCHAR" />
+      <collection property="child" ofType="com.cj.hafter.entity.BCModel">
+        <result column="cid" property="id" jdbcType="BIGINT" />
+        <result column="cname" property="name" jdbcType="VARCHAR" />
+      </collection>
+    </collection>
+  </resultMap>
+
+  <!--查询分类列表-->
+  <select id="findBC" resultMap="BCMod" parameterType="java.lang.String">
+SELECT
+	sa.sale_type_id aid,sa.sale_type_name aname,
+	sb.sale_type_id bid,sb.sale_type_name bname,
+	sc.sale_type_id cid,sc.sale_type_name cname
+FROM
+	sale_type sa
+LEFT JOIN sale_type sb ON sa.sale_type_id = sb.`parent_id`
+LEFT JOIN sale_type sc ON sb.sale_type_id = sc.`parent_id`
+WHERE
+	sa.`level` = 1
+AND (sb.`level` = 2 OR sb.`level` IS NULL)
+AND (sc.`level` = 3 OR sc.`level` IS NULL)
+<if test="parameter != null">
+AND sa.sale_type_id IN(
+SELECT
+CASE st1.`level`
+WHEN 1
+THEN st1.sale_type_id
+WHEN 2
+THEN st1.parent_id
+WHEN 3
+THEN (SELECT st2.parent_id FROM sale_type st2 WHERE st2.sale_type_id = st1.parent_id )
+ELSE '0'
+END qwe
+FROM sale_type st1
+WHERE st1.`level` != 0
+AND instr(st1.sale_type_name,#{parameter}) > 0
+)
+</if>
+  </select>
+
+
+  <!--根据名称查询分类-->
+    <select id="findTypeByName" resultMap="BaseResultMap">
+      SELECT *
+      FROM sale_type
+      WHERE sale_type_name = #{name}
+            AND `level` = #{level}
+            AND add_state = '1'
+            and parent_id = #{parentId}
+    </select>
+
+
+
+  <!--添加-->
+  <insert id="insertByName" parameterType="com.cj.core.entity.SaleType" keyProperty="saleTypeId" useGeneratedKeys="true">
+    INSERT INTO sale_type(parent_id,sale_type_name,`level`) VALUES (#{parentId},#{saleTypeName},#{level})
+  </insert>
+</mapper>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hbasic.mapper.ResourcesMapper" >
+
+
+  <!--把这个台站的台站图片全部删除-->
+  <delete id="deleteBySiteId" parameterType="java.lang.Long">
+    DELETE
+    FROM resources
+    WHERE relation_id = #{siteId}
+          AND resource_type = '台站图片'
+  </delete>
+
+
+  <resultMap id="findAllDocumentMap" type="com.cj.hbasic.domian.ResourcesVo">
+    <id jdbcType="BIGINT" property="resourceId" column="resource_id"/>
+    <result jdbcType="VARCHAR" property="resourceUrl" column="resource_url"/>
+    <result jdbcType="CHAR" property="resourceType" column="resource_type"/>
+    <result jdbcType="BIGINT" property="relationId" column="relation_id"/>
+    <result jdbcType="VARCHAR" property="fileName" column="file_name"/>
+    <result jdbcType="TIMESTAMP" property="createTime" column="create_time"/>
+    <result jdbcType="BIGINT" property="founderId" column="founder_id"/>
+    <result column="full_name" property="fullName"/>
+  </resultMap>
+  <!--分页查询文档列表-->
+  <select id="findAllDocument" resultMap="findAllDocumentMap" parameterType="com.cj.core.domain.Pager">
+    SELECT r.*,ai.`full_name`
+    FROM resources r
+      LEFT JOIN admin_info ai ON r.`founder_id` = ai.`admin_id`
+    WHERE r.`resource_type` = '文档'
+    <if test="parameter != null">
+      and (
+      instr(r.file_name, #{parameter}) > 0
+      OR instr(r.create_time, #{parameter}) > 0
+      OR instr(ai.`full_name`, #{parameter}) > 0
+      )
+    </if>
+    ORDER BY  r.`create_time` DESC
+  </select>
+</mapper>

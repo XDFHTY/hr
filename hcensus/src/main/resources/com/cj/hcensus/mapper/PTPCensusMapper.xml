@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hcensus.mapper.PTPCensusMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.PatrolTaskProvince" >
+    <id column="patrol_task_province_id" property="patrolTaskProvinceId" jdbcType="BIGINT" />
+    <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+    <result column="patrol_id" property="patrolId" jdbcType="BIGINT" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="task_type" property="taskType" jdbcType="CHAR" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <resultMap id="PatCensusMod" type="com.cj.hcensus.domain.PatCensusModel">
+    <result column="task_type" property="taskType" jdbcType="VARCHAR" />
+    <result column="staNum" property="staNum" jdbcType="INTEGER" />
+    <result column="patNum" property="patNum" jdbcType="INTEGER" />
+  </resultMap>
+  <!--统计巡查情况-->
+  <select id="findCensusP" resultMap="PatCensusMod" parameterType="map">
+    SELECT
+	ptp.task_type,
+	COUNT(DISTINCT s.site_id) staNum,
+	COUNT(DISTINCT pts.patrol_task_station_id) patNum
+    FROM
+	patrol_task_province ptp
+    LEFT JOIN patrol_task_station pts
+    ON ptp.patrol_task_province_id = pts.patrol_task_province_id
+    LEFT JOIN site s ON pts.site_id = s.site_id
+    <where>
+      s.is_delete_state = '1'
+      <if test="start != null">
+        AND pts.leave_time >= #{start}
+      </if>
+      <if test="end != null">
+        AND pts.leave_time &lt;= #{end}
+      </if>
+      <if test="pid != null">
+        AND s.site_province_id = #{pid}
+      </if>
+      <if test="cid != null">
+        AND s.site_city_id = #{cid}
+      </if>
+    </where>
+    GROUP BY
+	ptp.task_type
+  </select>
+</mapper>

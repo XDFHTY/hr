@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hsys.mapper.AdminMapper">
+    <resultMap id="BaseResultMap" type="com.cj.core.entity.Admin">
+        <id column="admin_id" property="adminId" jdbcType="BIGINT"/>
+        <result column="admin_name" property="adminName" jdbcType="VARCHAR"/>
+        <result column="admin_pass" property="adminPass" jdbcType="VARCHAR"/>
+        <result column="salt_val" property="saltVal" jdbcType="VARCHAR"/>
+        <result column="admin_type" property="adminType" jdbcType="CHAR"/>
+        <result column="admin_state" property="adminState" jdbcType="CHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="operator_id" property="operatorId" jdbcType="BIGINT"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    admin_id, admin_name, admin_pass, salt_val, admin_type, admin_state, create_time,operator_id,
+    update_time
+  </sql>
+
+    <!--删除账号-->
+    <update id="deleteAdmin" parameterType="java.lang.Long">
+        UPDATE
+    admin
+    SET
+    admin_state = '0'
+    WHERE
+    admin_id = #{adminId}
+  </update>
+
+    <!--批量删除管理员账号-->
+    <update id="deleteAdmins" parameterType="java.util.List">
+        UPDATE
+        admin
+        SET
+        admin_state = '0'
+        WHERE
+        admin_id IN
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item,jdbcType=BIGINT}
+        </foreach>
+
+    </update>
+
+
+    <resultMap id="VoAdmin" type="com.cj.hsys.domain.VoFindAdmin">
+        <id column="admin_id" property="adminId" jdbcType="BIGINT"/>
+        <result column="admin_name" property="adminName" jdbcType="VARCHAR"/>
+
+
+        <result column="role_id" property="roleId"/>
+        <result column="role_name" property="roleName" jdbcType="VARCHAR"/>
+
+        <association property="voAdminInfo" javaType="com.cj.hsys.domain.VoAdminInfo">
+            <result column="admin_info_id" property="adminInfoId" jdbcType="VARCHAR"/>
+            <result column="full_name" property="fullName" jdbcType="VARCHAR"/>
+            <result column="department_id" property="departmentId" jdbcType="VARCHAR"/>
+            <result column="phone" property="phone" jdbcType="VARCHAR"/>
+            <result column="province_id" property="provinceId"/>
+            <result column="city_id" property="cityId"/>
+
+            <result column="department_name" property="departmentName" jdbcType="VARCHAR"/>
+        </association>
+
+    </resultMap>
+    <!--查询所有账号-->
+    <select id="findAllAdmin" parameterType="com.cj.core.domain.Pager" resultMap="VoAdmin">
+    SELECT
+    a.admin_id,a.admin_name,
+    ai.admin_info_id,ai.department_id,ai.full_name,ai.phone,ai.province_id,ai.city_id,
+    d.department_name,
+    ar.role_id,ar.role_name
+    FROM
+    admin a
+    LEFT JOIN admin_info ai ON a.admin_id = ai.admin_id
+    LEFT JOIN department d ON ai.department_id = d.department_id
+    LEFT JOIN auth_customer_role acr ON a.admin_id = acr.customer_id
+    LEFT JOIN auth_role ar ON acr.role_id = ar.role_id
+    WHERE
+    a.admin_state = '1'
+
+
+  </select>
+
+    <!--根据adminName查询admin-->
+    <select id="findAdminByUserName" resultMap="BaseResultMap">
+    SELECT
+    *
+    FROM
+    admin a
+    WHERE
+    a.admin_name = #{adminName}
+    and
+    a.admin_state='1'
+  </select>
+
+    <!--根据adminName查询admin-->
+    <select id="findAdminByName" resultMap="BaseResultMap">
+    SELECT
+    *
+    FROM
+    admin a
+    WHERE
+    a.admin_name = #{adminName}
+
+  </select>
+
+    <!--修改密码-->
+    <update id="updateAdminPass" parameterType="com.cj.core.entity.Admin">
+    UPDATE
+    admin
+    SET
+    admin_pass = #{adminPass,jdbcType=VARCHAR}
+      WHERE
+      admin_id = #{adminId,jdbcType=BIGINT}
+  </update>
+
+</mapper>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.hcensus.mapper.RRCensusMapper" >
+  <resultMap id="RepCensusMod" type="com.cj.hcensus.domain.RepCensusModel">
+    <result column="id1" property="id" jdbcType="VARCHAR" />
+    <result column="name1" property="name" jdbcType="VARCHAR" />
+    <result column="num1" property="num" jdbcType="INTEGER" />
+    <result column="as1" property="addState" jdbcType="VARCHAR" />
+    <collection property="list" ofType="com.cj.hcensus.domain.RepCensusModel">
+      <result column="id2" property="id" jdbcType="VARCHAR" />
+      <result column="name2" property="name" jdbcType="VARCHAR" />
+      <result column="num2" property="num" jdbcType="INTEGER" />
+      <result column="as2" property="addState" jdbcType="VARCHAR" />
+    </collection>
+  </resultMap>
+  <!--统计维护状态-->
+  <select id="findCensusR" resultMap="RepCensusMod" parameterType="map">
+    SELECT
+    st1.sale_type_id id1,
+    st1.sale_type_name name1,
+    st1.add_state as1,
+    (SELECT
+    COUNT(DISTINCT repair_record_id)
+    FROM repair_record
+    WHERE one_level_id = rr.one_level_id) num1,
+    st2.sale_type_id id2,
+    st2.sale_type_name name2,
+    st2.add_state as2,
+    count(DISTINCT rr.repair_record_id) num2
+    FROM
+    repair_record rr
+    LEFT JOIN sale_type st1 ON rr.one_level_id = st1.sale_type_id
+    LEFT JOIN sale_type st2 ON rr.two_level_id = st2.sale_type_id
+    LEFT JOIN sale_num sn ON rr.sale_num_id = sn.sale_num_id
+    LEFT JOIN `declare_data` d ON sn.declare_id = d.declare_id
+    LEFT JOIN site s ON d.site_id = s.site_id
+    <where>
+      <if test="end != null">
+      AND rr.maintain_time &lt;= #{end}
+      </if>
+      <if test="start != null">
+      AND rr.maintain_time >= #{start}
+      </if>
+      <if test="type != null">
+      AND rr.one_level_id = #{type}
+      </if>
+      <if test="pid != null">
+      AND s.site_province_id = #{pid}
+      </if>
+      <if test="cid != null">
+      AND s.site_city_id = #{cid}
+      </if>
+    </where>
+    GROUP BY
+    rr.two_level_id
+  </select>
+</mapper>

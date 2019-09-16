@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cj.common.mapper.FUMapper" >
+  <resultMap id="BaseResultMap" type="com.cj.core.entity.AdminInfo" >
+    <id column="admin_info_id" property="adminInfoId" jdbcType="BIGINT" />
+    <result column="admin_id" property="adminId" jdbcType="BIGINT" />
+    <result column="department_id" property="departmentId" jdbcType="BIGINT" />
+    <result column="full_name" property="fullName" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="city_id" property="cityId" jdbcType="BIGINT" />
+    <result column="heard_url" property="heardUrl" jdbcType="VARCHAR" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="AdmainMod" type="com.cj.common.domain.AdmainModel">
+    <result column="admin_id" property="adminId" jdbcType="BIGINT" />
+    <result column="full_name" property="fullName" jdbcType="VARCHAR" />
+    <result column="province_id" property="provinceId" jdbcType="BIGINT" />
+    <result column="city_id" property="cityId" jdbcType="BIGINT" />
+    <result column="provinceName" property="provinceName" jdbcType="VARCHAR" />
+    <result column="cityName" property="cityName" jdbcType="VARCHAR" />
+  </resultMap>
+  <!--根据角色id和部门id查询-->
+  <select id="findUser" resultMap="AdmainMod" parameterType="java.lang.Long">
+    SELECT ai.admin_id ,ai.full_name,ai.city_id,ai.province_id,
+    re1.name provinceName,re2.name cityName
+    FROM admin_info ai
+    LEFT JOIN auth_customer_role acr ON ai.admin_id = acr.customer_id
+    LEFT JOIN region_2017 re1 ON ai.province_id = re1.id
+    LEFT JOIN region_2017 re2 ON ai.city_id = re2.id
+    <where>
+      <if test="pid != 0">
+        AND acr.role_id = #{pid}
+      </if>
+      <if test="cid != 0">
+        AND ai.department_id = #{cid}
+      </if>
+    </where>
+  </select>
+</mapper>

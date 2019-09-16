@@ -1,0 +1,56 @@
+{
+  "reverse": {
+    "portals": [
+      {
+        "tag": "portal",
+        "domain": "140.com"
+      }
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "external",
+      "port": 9980,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1",
+        "port": 9980,
+        "network": "tcp"
+      }
+    },
+    {
+      "tag": "tunnel",
+      "port": 41500,
+      "protocol": "vmess",
+      "settings": {
+        "clients": [
+          {
+            "id": "0a0ee59e-fb75-450a-b549-bdf3b30956b8",
+            "alterId": 64
+          }
+        ]
+      }
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": [
+          "external"
+        ],
+        "outboundTag": "portal"
+      },
+      {
+        "type": "field",
+        "inboundTag": [
+          "tunnel"
+        ],
+        "domain": [
+          "full:140.com"
+        ],
+        "outboundTag": "portal"
+      }
+    ]
+  }
+}
